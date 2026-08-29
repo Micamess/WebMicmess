@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSocialLinks } from '../hooks/useSocialLinks'
 
@@ -68,6 +68,46 @@ function SocialLinksEditor() {
   )
 }
 
+function KickConnectionCard() {
+  const [status, setStatus] = useState({ loading: true, connected: false })
+  const [params] = useSearchParams()
+  const justConnected = params.get('kick') === 'connected'
+
+  useEffect(() => {
+    fetch('/api/kick-connection-status')
+      .then((r) => r.json())
+      .then((data) => setStatus({ loading: false, connected: data.connected }))
+      .catch(() => setStatus({ loading: false, connected: false }))
+  }, [justConnected])
+
+  return (
+    <div className="w-full max-w-md bg-bg-panel border border-white/10 rounded-2xl p-5 text-left mt-4">
+      <h2 className="font-display text-base mb-1">Conexión con Kick</h2>
+      <p className="text-xs text-ink-faint mb-4">
+        Necesaria para que las palabras clave de los sorteos (y más adelante encuestas) se detecten solas en el chat.
+      </p>
+
+      {status.loading ? (
+        <p className="text-xs text-ink-faint">Revisando...</p>
+      ) : status.connected ? (
+        <div className="flex items-center gap-2 text-sm text-mint">
+          <span className="w-2 h-2 rounded-full bg-mint" /> Conectado
+        </div>
+      ) : (
+        <a
+          href="/api/kick-connect"
+          className="inline-block rounded-lg bg-pink px-4 py-2.5 text-sm font-semibold text-[#1a0e33]"
+        >
+          Conectar con Kick
+        </a>
+      )}
+      {justConnected && !status.loading && status.connected && (
+        <p className="text-xs text-mint mt-2">¡Listo! Ya quedó todo conectado.</p>
+      )}
+    </div>
+  )
+}
+
 export default function AdminLogin() {
   const { signIn, isAdmin, signOut } = useAuth()
   const [email, setEmail] = useState('')
@@ -107,6 +147,8 @@ export default function AdminLogin() {
           <p className="text-xs text-ink-faint mb-4">Pegá el link de cada red — se actualizan solas en el sitio.</p>
           <SocialLinksEditor />
         </div>
+
+        <KickConnectionCard />
       </div>
     )
   }

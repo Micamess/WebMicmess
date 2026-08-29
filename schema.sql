@@ -102,3 +102,25 @@ create policy "giveaway_entries_public_read" on public.giveaway_entries for sele
 drop policy if exists "giveaway_entries_admin_write" on public.giveaway_entries;
 create policy "giveaway_entries_admin_write" on public.giveaway_entries for all
   using (auth.uid() is not null) with check (auth.uid() is not null);
+
+-- 6) Conexión con Kick (Etapa 3) --------------------------------------------
+-- Guarda los tokens del canal autorizado. Nadie los puede leer ni escribir
+-- desde el navegador (ni admin ni p�blico) — solo las funciones de servidor,
+-- que usan la service role key y por lo tanto se saltean RLS por completo.
+create table if not exists public.kick_connection (
+  id boolean primary key default true,
+  broadcaster_user_id bigint,
+  access_token text,
+  refresh_token text,
+  expires_at timestamptz,
+  connected_at timestamptz default now(),
+  constraint kick_connection_singleton check (id)
+);
+alter table public.kick_connection enable row level security;
+
+-- Evita procesar dos veces el mismo mensaje si Kick reintenta el webhook
+create table if not exists public.webhook_events_seen (
+  message_id text primary key,
+  received_at timestamptz not null default now()
+);
+alter table public.webhook_events_seen enable row level security;
