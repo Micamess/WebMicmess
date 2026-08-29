@@ -19,7 +19,10 @@ async function getAppAccessToken() {
     }),
   })
 
-  if (!res.ok) throw new Error('No se pudo autenticar con Kick')
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '')
+    throw new Error(`No se pudo autenticar con Kick (status ${res.status}): ${detail}`)
+  }
   const data = await res.json()
   cachedToken = data.access_token
   // Guardamos el token un minuto menos de lo que dura, como margen de seguridad

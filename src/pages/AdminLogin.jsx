@@ -82,7 +82,7 @@ export default function AdminLogin() {
     setError(null)
     const { error } = await signIn(email, password)
     setLoading(false)
-    if (error) setError('Email o contraseña incorrectos.')
+    if (error) setError(`${error.message} (código: ${error.status ?? error.code ?? 's/d'})`)
     else navigate('/zona-de-abduccion')
   }
 
